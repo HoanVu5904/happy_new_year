@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lời chúc gửi tới vợ</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #020202; /* Nền gần đen tuyệt đối */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Canvas để vẽ pháo hoa - nằm dưới cùng */
+        #fireworksCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Lớp thấp nhất */
+            pointer-events: none; /* Để chuột bấm xuyên qua được vào video */
+        }
+
+        /* Các nội dung chính - nằm đè lên pháo hoa */
+        .content-wrapper {
+            position: relative;
+            z-index: 10; /* Lớp cao hơn */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #ff69b4;
+            text-shadow: 0 0 15px #ff69b4, 0 0 30px #ff1493;
+            margin-bottom: 25px;
+            font-size: 28px;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .video-container {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            /* Đã xóa phần box-shadow và border rườm rà */
+            border-radius: 15px; /* Giữ lại bo tròn góc cho mềm mại */
+            overflow: hidden;    /* Để video không bị tràn ra ngoài góc bo tròn */
+            background: #000;
+            /* Thêm một bóng mờ nhẹ nhàng màu hồng để tách biệt khỏi nền tối (tùy chọn) */
+             box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            /* Làm video hơi sáng lên một chút */
+            filter: brightness(1.1) contrast(1.05);
+        }
+
+        .back-btn {
+            margin-top: 35px;
+            padding: 12px 30px;
+            background: rgba(255, 105, 180, 0.2);
+            border: 2px solid #ff69b4;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .back-btn:hover {
+            background: #ff69b4;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fireworksCanvas"></canvas>
+
+    <div class="content-wrapper">
+        <h1>❤️ Chúc Mừng Năm Mới Vợ Yêu ❤️</h1>
+        
+        <div class="video-container">
+            <div class="video-container">
+    <iframe 
+        width="100%" 
+        height="100%" 
+        style="aspect-ratio: 16/9; min-height: 300px;"
+        src="https://www.youtube.com/embed/OT528eBBb3I?autoplay=1&rel=0" 
+        title="Lời chúc mừng năm mới" 
+        frameborder="0" 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        allowfullscreen>
+    </iframe>
+</div>
+        </div>
+
+        <a href="index.html" class="back-btn">← Quay lại ngắm pháo hoa lớn</a>
+    </div>
+
+
+    <script>
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Tự động điều chỉnh kích thước khi xoay màn hình
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor(x, y, color, velocity) {
+                this.x = x; this.y = y; this.color = color;
+                this.velocity = velocity;
+                this.alpha = 1;
+                this.gravity = 0.03; // Trọng lực nhẹ
+                this.friction = 0.98; // Ma sát để chậm dần
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                this.velocity.x *= this.friction;
+                this.velocity.y *= this.friction;
+                this.velocity.y += this.gravity;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.alpha -= 0.008; // Mờ dần
+            }
+        }
+
+        class Firework {
+            constructor(x) {
+                this.x = x;
+                this.y = canvas.height;
+                this.isExploded = false;
+                // Màu sắc ngẫu nhiên rực rỡ (hồng, đỏ, vàng, tím)
+                const colors = ['#ff69b4', '#ff0000', '#ffd700', '#9400d3', '#00ffff'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                // Tốc độ bay lên
+                this.velocity = {x: Math.random() * 1 - 0.5, y: Math.random() * -3 - 4}; 
+                this.particles = [];
+            }
+            draw() {
+                if (!this.isExploded) {
+                    // Vẽ tia pháo bay lên
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    // Tạo hiệu ứng đuôi mờ
+                    ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                this.particles.forEach(p => p.draw());
+            }
+            update() {
+                if (!this.isExploded) {
+                    this.velocity.y += 0.04; // Trọng lực khi bay lên
+                    this.x += this.velocity.x;
+                    this.y += this.velocity.y;
+                    // Khi bay chậm lại gần đỉnh thì nổ
+                    if (this.velocity.y >= -0.5) {
+                        this.isExploded = true;
+                        this.explode();
+                    }
+                }
+                this.particles.forEach((p, index) => {
+                    p.update();
+                    if (p.alpha <= 0) this.particles.splice(index, 1);
+                });
+            }
+            explode() {
+                // Tạo 50 hạt nhỏ tỏa ra
+                for (let i = 0; i < 50; i++) {
+                    const angle = Math.random() * Math.PI * 2; // Góc ngẫu nhiên
+                    const speed = Math.random() * 3 + 1; // Tốc độ ngẫu nhiên
+                    const velocity = {
+                        x: Math.cos(angle) * speed,
+                        y: Math.sin(angle) * speed
+                    };
+                    this.particles.push(new Particle(this.x, this.y, this.color, velocity));
+                }
+            }
+        }
+
+        let fireworks = [];
+        function animate() {
+            // Tạo hiệu ứng vệt mờ khi di chuyển
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Thỉnh thoảng bắn 1 quả pháo mới (khoảng 3% cơ hội mỗi khung hình)
+            if (Math.random() < 0.03) {
+                fireworks.push(new Firework(Math.random() * canvas.width));
+            }
+
+            fireworks.forEach((fw, index) => {
+                fw.update();
+                fw.draw();
+                // Xóa pháo đã nổ xong
+                if (fw.isExploded && fw.particles.length === 0) {
+                    fireworks.splice(index, 1);
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate(); // Bắt đầu chạy hiệu ứng
+    </script>
+</body>
+</html>
